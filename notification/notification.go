@@ -6,21 +6,19 @@ import (
 	"github.com/Tsisar/extended-log-go/log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
-const messageTTL = 30 * time.Minute
-const messageStatusFile = "/app/message_status.json"
+const messageTTL = 60 * time.Minute
+const messageStatusFile = "message_status.json"
 
 var version string
 var appName string
 var environment string
 var messageStatus = make(map[string]time.Time)
-var statusMutex sync.Mutex
 
 func init() {
-	version = getVersion("/app/VERSION")
+	version = getVersion("VERSION")
 	appName = getStringEnv("APP_NAME", "")
 	environment = getStringEnv("ENVIRONMENT", "")
 
@@ -58,9 +56,6 @@ func sendMsg(message string) {
 }
 
 func checkMessageSentStatus(message string) bool {
-	statusMutex.Lock()
-	defer statusMutex.Unlock()
-
 	now := time.Now()
 
 	lastSent, exists := messageStatus[message]
@@ -70,13 +65,11 @@ func checkMessageSentStatus(message string) bool {
 
 	messageStatus[message] = now
 	saveMessageStatus()
+
 	return false
 }
 
 func loadMessageStatus() {
-	statusMutex.Lock()
-	defer statusMutex.Unlock()
-
 	data, err := os.ReadFile(messageStatusFile)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -92,9 +85,6 @@ func loadMessageStatus() {
 }
 
 func saveMessageStatus() {
-	statusMutex.Lock()
-	defer statusMutex.Unlock()
-
 	data, err := json.Marshal(messageStatus)
 	if err != nil {
 		log.Errorf("Error marshalling message status: %v", err)
