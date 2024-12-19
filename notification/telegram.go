@@ -22,7 +22,7 @@ type telegram struct {
 
 func init() {
 	Telegram = &telegram{
-		Enable: getBoolEnv("TELEGRAM_NOTIFICATION", false),
+		Enable: getBoolEnv("TELEGRAM_NOTIFICATIONS", false),
 		ChatID: getStringEnv("TELEGRAM_CHAT_ID", ""),
 		Token:  getStringEnv("TELEGRAM_BOT_TOKEN", ""),
 	}

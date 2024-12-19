@@ -44,13 +44,13 @@ import "github.com/Tsisar/notification-go/notification"
 
 **Required for Telegram**
 
-- TELEGRAM_NOTIFICATION: Enable Telegram notifications (true or false).
+- TELEGRAM_NOTIFICATIONS: Enable Telegram notifications (true or false).
 - TELEGRAM_CHAT_ID: Chat ID where messages will be sent.
 - TELEGRAM_BOT_TOKEN: Bot token for authentication.
 
 **Required for Slack**
 
-- SLACK_NOTIFICATION: Enable Slack notifications (true or false).
+- SLACK_NOTIFICATIONS: Enable Slack notifications (true or false).
 - SLACK_CHANNEL: Slack webhook URL.
 
 **General Configuration**

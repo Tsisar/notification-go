@@ -19,7 +19,7 @@ type slack struct {
 
 func init() {
 	Slack = &slack{
-		Enable:  getBoolEnv("SLACK_NOTIFICATION", false),
+		Enable:  getBoolEnv("SLACK_NOTIFICATIONS", false),
 		Channel: getStringEnv("SLACK_CHANNEL", ""),
 	}
 }
