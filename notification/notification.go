@@ -77,7 +77,8 @@ func checkMessageSentStatus(message string) bool {
 func getVersion(filename string) string {
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("Error reading version file: %v", err)
+		log.Errorf("Error reading version file: %v", err)
+		data = []byte("unknown")
 	}
 
 	return strings.TrimSpace(string(data))
