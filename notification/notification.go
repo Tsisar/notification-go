@@ -18,7 +18,7 @@ var environment string
 var messageStatus sync.Map
 
 func init() {
-	version = getVersion("VERSION")
+	version = getVersion("/app/VERSION")
 	appName = getStringEnv("APP_NAME", "")
 	environment = getStringEnv("ENVIRONMENT", "")
 }
@@ -54,7 +54,6 @@ func sendMsg(message string) {
 		log.Errorf("Error sending message to Slack: %v", err)
 	}
 }
-
 
 // checkMessageSentStatus checks if a message has been sent and refreshes its cooldown.
 func checkMessageSentStatus(message string) bool {
