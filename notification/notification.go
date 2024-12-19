@@ -10,7 +10,7 @@ import (
 )
 
 const messageTTL = 60 * time.Minute
-const messageStatusFile = "message_status.json"
+const messageStatusFile = "/app/message_status.json"
 
 var version string
 var appName string
@@ -18,7 +18,7 @@ var environment string
 var messageStatus = make(map[string]time.Time)
 
 func init() {
-	version = getVersion("VERSION")
+	version = getVersion("/app/VERSION")
 	appName = getStringEnv("APP_NAME", "")
 	environment = getStringEnv("ENVIRONMENT", "")
 
