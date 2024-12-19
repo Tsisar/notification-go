@@ -1,39 +1,40 @@
 package notification
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/Tsisar/extended-log-go/log"
 	"os"
 	"strings"
 	"sync"
 	"time"
-
-	"fmt"
 )
 
-const messageTTL = 10 * time.Minute
+const messageTTL = 30 * time.Minute
+const messageStatusFile = "/app/message_status.json"
 
 var version string
 var appName string
 var environment string
-var messageStatus sync.Map
+var messageStatus = make(map[string]time.Time)
+var statusMutex sync.Mutex
 
 func init() {
 	version = getVersion("/app/VERSION")
 	appName = getStringEnv("APP_NAME", "")
 	environment = getStringEnv("ENVIRONMENT", "")
+
+	loadMessageStatus()
 }
 
-// Error sends an error message to Slack Channel
 func Error(message string) {
 	sendMsg(fmt.Sprintf("🔴 ERROR\n%s", message))
 }
 
-// Warning sends a warning message to Slack Channel
 func Warning(message string) {
 	sendMsg(fmt.Sprintf("🟡 WARNING\n%s", message))
 }
 
-// Info sends an info message to Slack Channel
 func Info(message string) {
 	sendMsg(fmt.Sprintf("🟢 INFO\n%s", message))
 }
@@ -49,29 +50,61 @@ func sendMsg(message string) {
 	if err != nil {
 		log.Errorf("Error sending message to Telegram: %v", err)
 	}
+
 	err = Slack.SendMessage(message)
 	if err != nil {
 		log.Errorf("Error sending message to Slack: %v", err)
 	}
 }
 
-// checkMessageSentStatus checks if a message has been sent and refreshes its cooldown.
 func checkMessageSentStatus(message string) bool {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+
 	now := time.Now()
 
-	// Check if the message has been sent recently
-	lastSent, exists := messageStatus.Load(message)
-
-	if exists {
-		lastSentTime := lastSent.(time.Time)
-		if now.Sub(lastSentTime) < messageTTL {
-			return true // Message has been sent recently
-		}
+	lastSent, exists := messageStatus[message]
+	if exists && now.Sub(lastSent) < messageTTL {
+		return true
 	}
 
-	// Update the message status
-	messageStatus.Store(message, now)
+	messageStatus[message] = now
+	saveMessageStatus()
 	return false
+}
+
+func loadMessageStatus() {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+
+	data, err := os.ReadFile(messageStatusFile)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Errorf("Error reading message status file: %v", err)
+		}
+		return
+	}
+
+	err = json.Unmarshal(data, &messageStatus)
+	if err != nil {
+		log.Errorf("Error unmarshalling message status: %v", err)
+	}
+}
+
+func saveMessageStatus() {
+	statusMutex.Lock()
+	defer statusMutex.Unlock()
+
+	data, err := json.Marshal(messageStatus)
+	if err != nil {
+		log.Errorf("Error marshalling message status: %v", err)
+		return
+	}
+
+	err = os.WriteFile(messageStatusFile, data, 0644)
+	if err != nil {
+		log.Errorf("Error writing message status file: %v", err)
+	}
 }
 
 func getVersion(filename string) string {
