@@ -60,6 +60,9 @@ func checkMessageSentStatus(message string) bool {
 
 	lastSent, exists := messageStatus[message]
 	if exists && now.Sub(lastSent) < messageTTL {
+		messageStatus[message] = now
+		saveMessageStatus()
+
 		return true
 	}
 
