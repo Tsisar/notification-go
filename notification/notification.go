@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/Tsisar/extended-log-go/log"
@@ -24,7 +25,6 @@ func init() {
 	}
 
 	exeDir := filepath.Dir(exePath)
-
 	messageStatusFile = filepath.Join(exeDir, "message_status.json")
 
 	versionFilePath := filepath.Join(exeDir, "VERSION")
@@ -51,39 +51,43 @@ func Info(message string) {
 	sendMsg(fmt.Sprintf("🟢 INFO\n%s", message))
 }
 
+func hashMessage(msg string) string {
+	sum := sha256.Sum256([]byte(msg))
+	return fmt.Sprintf("%x", sum)
+}
+
 func sendMsg(message string) {
-	if checkMessageSentStatus(message) {
+	hash := hashMessage(message)
+
+	if checkMessageSentStatus(hash) {
 		return
 	}
 	app := fmt.Sprintf("%s version %s", appName, version)
-	message = fmt.Sprintf("%s\n%s\nenv: %s", message, app, environment)
+	messageToSend := fmt.Sprintf("%s\n%s\nenv: %s", message, app, environment)
 
-	err := Telegram.SendMessage(message)
+	err := Telegram.SendMessage(messageToSend)
 	if err != nil {
 		log.Errorf("Error sending message to Telegram: %v", err)
 	}
 
-	err = Slack.SendMessage(message)
+	err = Slack.SendMessage(messageToSend)
 	if err != nil {
 		log.Errorf("Error sending message to Slack: %v", err)
 	}
 }
 
-func checkMessageSentStatus(message string) bool {
+func checkMessageSentStatus(msgHash string) bool {
 	now := time.Now()
 
-	lastSent, exists := messageStatus[message]
+	lastSent, exists := messageStatus[msgHash]
 	if exists && now.Sub(lastSent) < messageTTL {
-		// Оновлюємо час при кожному виклику
-		messageStatus[message] = now
+		messageStatus[msgHash] = now
 		saveMessageStatus()
-
 		return true
 	}
 
-	messageStatus[message] = now
+	messageStatus[msgHash] = now
 	saveMessageStatus()
-
 	return false
 }
 
