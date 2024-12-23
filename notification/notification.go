@@ -5,22 +5,36 @@ import (
 	"fmt"
 	"github.com/Tsisar/extended-log-go/log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-const messageTTL = 60 * time.Minute
-const messageStatusFile = "/app/message_status.json"
-
+var messageTTL time.Duration
+var messageStatusFile string
 var version string
 var appName string
 var environment string
 var messageStatus = make(map[string]time.Time)
 
 func init() {
-	version = getVersion("/app/VERSION")
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Cannot determine executable path: %v", err)
+	}
+
+	exeDir := filepath.Dir(exePath)
+
+	messageStatusFile = filepath.Join(exeDir, "message_status.json")
+
+	versionFilePath := filepath.Join(exeDir, "VERSION")
+	version = getVersion(versionFilePath)
+
 	appName = getStringEnv("APP_NAME", "")
 	environment = getStringEnv("ENVIRONMENT", "")
+
+	ttl := getIntEnv("MESSAGE_TTL", 60)
+	messageTTL = time.Duration(ttl) * time.Minute
 
 	loadMessageStatus()
 }
@@ -60,6 +74,7 @@ func checkMessageSentStatus(message string) bool {
 
 	lastSent, exists := messageStatus[message]
 	if exists && now.Sub(lastSent) < messageTTL {
+		// Оновлюємо час при кожному виклику
 		messageStatus[message] = now
 		saveMessageStatus()
 

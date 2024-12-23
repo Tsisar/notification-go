@@ -22,3 +22,12 @@ func getBoolEnv(key string, defaultValue bool) bool {
 	}
 	return value == "true"
 }
+
+func getIntEnv(key string, defaultValue int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Warnf("%s not found in environment variables, using default: %v", key, defaultValue)
+		return defaultValue
+	}
+	return defaultValue
+}
