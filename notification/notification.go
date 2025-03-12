@@ -7,7 +7,6 @@ import (
 	"github.com/Tsisar/extended-log-go/log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -27,10 +26,8 @@ func init() {
 	exeDir := filepath.Dir(exePath)
 	messageStatusFile = filepath.Join(exeDir, "message_status.json")
 
-	versionFilePath := filepath.Join(exeDir, "VERSION")
-	version = getVersion(versionFilePath)
-
 	appName = getStringEnv("APP_NAME", "")
+	version = getStringEnv("VERSION", "unknown")
 	environment = getStringEnv("ENVIRONMENT", "")
 
 	ttl := getIntEnv("MESSAGE_TTL", 60)
@@ -117,14 +114,4 @@ func saveMessageStatus() {
 	if err != nil {
 		log.Errorf("Error writing message status file: %v", err)
 	}
-}
-
-func getVersion(filename string) string {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		log.Errorf("Error reading version file: %v", err)
-		data = []byte("unknown")
-	}
-
-	return strings.TrimSpace(string(data))
 }
